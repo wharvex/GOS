@@ -179,7 +179,9 @@ public class OSSimulatorGUI extends JFrame {
   }
 
   private void simulateWork(String operation, long durationMs) {
-    logMessage("Performing: " + operation);
+    logMessage(
+        Thread.currentThread().getName() + " is performing: " + operation);
+//    logMessage("Performing: " + operation);
     try {
       Thread.sleep(durationMs); // Simulate work
     } catch (InterruptedException e) {
