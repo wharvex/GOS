@@ -1,18 +1,14 @@
 package com.wharvex.gos;
 
 public class Bootloader implements Runnable {
-  public Thread getThread() {
-    return thread;
-  }
-
-  public void setThread(Thread thread) {
-    this.thread = thread;
-  }
-
-  private Thread thread;
 
   @Override
   public void run() {
+    OSSimulatorGUI.getInstance().simulateWork("BIOS POST check", 500);
 
+    OSSimulatorGUI.getInstance().simulateWork("Loading bootloader", 1000);
+
+    OSSimulatorGUI.getInstance()
+        .simulateWork("Bootloader initializing hardware", 1500);
   }
 }

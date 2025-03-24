@@ -12,8 +12,7 @@ public class App {
 
   public static void main(String[] args) {
     SwingUtilities.invokeLater(() -> {
-      OSSimulatorGUI gui = new OSSimulatorGUI();
-      gui.setVisible(true);
+      OSSimulatorGUI.getInstance().setVisible(true);
     });
   }
 }

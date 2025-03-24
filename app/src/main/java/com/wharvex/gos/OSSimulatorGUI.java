@@ -4,28 +4,27 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 
 public class OSSimulatorGUI extends JFrame {
   private final ExecutorService bootLoaderThread;
   private final ExecutorService kernelThread;
   private final ExecutorService userlandProcessThread;
 
+  private final SingleThreadFactory bootloaderThreadFactory;
+
   private JTextArea outputConsole;
   private JButton bootButton;
+  private JButton kernelButton;
   private JButton shutdownButton;
   private JButton launchAppButton;
-  private JProgressBar systemProgress;
 
-  public OSSimulatorGUI() {
-    // Initialize your OS-specific threads
-    bootLoaderThread = Executors.newSingleThreadExecutor(r -> {
-      Thread t = new Thread(r, "BootLoader");
-      t.setPriority(Thread.MAX_PRIORITY);
-      return t;
-    });
+  private static OSSimulatorGUI instance;
+
+  private OSSimulatorGUI() {
+    bootloaderThreadFactory = new SingleThreadFactory("BootLoader");
+    bootLoaderThread =
+        Executors.newSingleThreadExecutor(bootloaderThreadFactory);
 
     kernelThread = Executors.newSingleThreadExecutor(r -> {
       Thread t = new Thread(r, "Kernel");
@@ -42,6 +41,13 @@ public class OSSimulatorGUI extends JFrame {
     initializeGUI();
   }
 
+  public static OSSimulatorGUI getInstance() {
+    if (instance == null) {
+      instance = new OSSimulatorGUI();
+    }
+    return instance;
+  }
+
   private void initializeGUI() {
     setTitle("OS Simulator");
     setSize(600, 400);
@@ -54,26 +60,26 @@ public class OSSimulatorGUI extends JFrame {
     JScrollPane scrollPane = new JScrollPane(outputConsole);
 
     bootButton = new JButton("Boot System");
+    kernelButton = new JButton("Launch Kernel");
     shutdownButton = new JButton("Shutdown");
     launchAppButton = new JButton("Launch Application");
+    kernelButton.setEnabled(false);
     shutdownButton.setEnabled(false);
     launchAppButton.setEnabled(false);
-
-    systemProgress = new JProgressBar();
-    systemProgress.setStringPainted(true);
 
     // Control panel
     JPanel controlPanel = new JPanel();
     controlPanel.add(bootButton);
+    controlPanel.add(kernelButton);
     controlPanel.add(shutdownButton);
     controlPanel.add(launchAppButton);
 
     add(controlPanel, BorderLayout.NORTH);
     add(scrollPane, BorderLayout.CENTER);
-    add(systemProgress, BorderLayout.SOUTH);
 
     // Add event listeners
     bootButton.addActionListener(e -> bootSystem());
+    kernelButton.addActionListener(e -> launchKernel());
     shutdownButton.addActionListener(e -> shutdownSystem());
     launchAppButton.addActionListener(e -> launchUserApplication());
 
@@ -89,46 +95,49 @@ public class OSSimulatorGUI extends JFrame {
   private void bootSystem() {
     bootButton.setEnabled(false);
     logMessage("Initiating boot sequence...");
-    systemProgress.setValue(0);
+    var bootLoader = new Bootloader();
 
     // Run boot sequence on bootLoaderThread
-    submitTask(bootLoaderThread, () -> {
-      // Simulate BIOS/bootloader operations
-      simulateWork("BIOS POST check", 500);
-      updateProgress(10);
+    submitTask(bootLoaderThread, bootLoader);
 
-      simulateWork("Loading bootloader", 1000);
-      updateProgress(20);
+//         -> {
+//      // Simulate BIOS/bootloader operations
+//      simulateWork("BIOS POST check", 500);
+//      updateProgress(10);
+//
+//      simulateWork("Loading bootloader", 1000);
+//      updateProgress(20);
+//
+//      simulateWork("Bootloader initializing hardware", 1500);
+//      updateProgress(30);
 
-      simulateWork("Bootloader initializing hardware", 1500);
-      updateProgress(30);
-
-      // Hand off to kernel thread
-      submitTask(kernelThread, () -> {
-        // Simulate kernel boot
-        simulateWork("Loading kernel", 2000);
-        updateProgress(40);
-
-        simulateWork("Initializing device drivers", 1000);
-        updateProgress(50);
-
-        simulateWork("Starting system services", 1500);
-        updateProgress(70);
-
-        simulateWork("Mounting filesystems", 1000);
-        updateProgress(90);
-
-        simulateWork("System ready", 500);
-        updateProgress(100);
-
-        // Update UI on EDT
-        SwingUtilities.invokeLater(() -> {
-          logMessage("System booted successfully!");
-          shutdownButton.setEnabled(true);
-          launchAppButton.setEnabled(true);
-        });
-      });
-    });
+    // Hand off to kernel thread
+//      submitTask(kernelThread, () -> {
+//        // Simulate kernel boot
+//        simulateWork("Loading kernel", 2000);
+//        updateProgress(40);
+//
+//        simulateWork("Initializing device drivers", 1000);
+//        updateProgress(50);
+//
+//        simulateWork("Starting system services", 1500);
+//        updateProgress(70);
+//
+//        simulateWork("Mounting filesystems", 1000);
+//        updateProgress(90);
+//
+//        simulateWork("System ready", 500);
+//        updateProgress(100);
+//
+//        // Update UI on EDT
+//        SwingUtilities.invokeLater(() -> {
+//          logMessage("System booted successfully!");
+//          shutdownButton.setEnabled(true);
+//          launchAppButton.setEnabled(true);
+//        });
+//      });
+//    });
+    kernelButton.setEnabled(true);
   }
 
   private void shutdownSystem() {
@@ -147,7 +156,29 @@ public class OSSimulatorGUI extends JFrame {
       SwingUtilities.invokeLater(() -> {
         logMessage("System shutdown complete");
         bootButton.setEnabled(true);
-        systemProgress.setValue(0);
+      });
+    });
+  }
+
+  private void launchKernel() {
+    kernelButton.setEnabled(false);
+    logMessage("Launching Kernel...");
+
+    submitTask(kernelThread, () -> {
+      simulateWork("Loading kernel", 2000);
+
+      simulateWork("Initializing device drivers", 1000);
+
+      simulateWork("Starting system services", 1500);
+
+      simulateWork("Mounting filesystems", 1000);
+
+      simulateWork("System ready", 500);
+
+      SwingUtilities.invokeLater(() -> {
+        logMessage("System booted successfully!");
+        shutdownButton.setEnabled(true);
+        launchAppButton.setEnabled(true);
       });
     });
   }
@@ -178,7 +209,7 @@ public class OSSimulatorGUI extends JFrame {
         });
   }
 
-  private void simulateWork(String operation, long durationMs) {
+  public void simulateWork(String operation, long durationMs) {
     logMessage(
         Thread.currentThread().getName() + " is performing: " + operation);
 //    logMessage("Performing: " + operation);
@@ -188,10 +219,6 @@ public class OSSimulatorGUI extends JFrame {
       Thread.currentThread().interrupt();
       logMessage("Operation interrupted: " + operation);
     }
-  }
-
-  private void updateProgress(int value) {
-    SwingUtilities.invokeLater(() -> systemProgress.setValue(value));
   }
 
   private void logMessage(String message) {
