@@ -8,12 +8,12 @@ import java.util.logging.Logger;
 public class GOSLoggerSource {
   private final Logger mainLogger;
   private final Logger debugLogger;
-  private final static String logFilePath =
-      System.getProperty("user.home") + "gos.log";
+  private final String logFilePath;
 
   private static GOSLoggerSource instance = null;
 
   private GOSLoggerSource() {
+    logFilePath = "C:\\Users\\tgudl\\gos.log";
     mainLogger = Logger.getLogger("Main");
     debugLogger = Logger.getLogger("Debug");
 
@@ -35,4 +35,11 @@ public class GOSLoggerSource {
     return instance;
   }
 
+  public Logger getMainLogger() {
+    return mainLogger;
+  }
+
+  public Logger getDebugLogger() {
+    return debugLogger;
+  }
 }

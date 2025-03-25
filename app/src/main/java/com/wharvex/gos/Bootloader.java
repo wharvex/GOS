@@ -14,7 +14,7 @@ public class Bootloader implements Runnable, WorkSimulator {
 
   @Override
   public void simulateWork(String operation, int duration) {
-    OSSimulatorGUI.getInstance().logMessage(
+    GOSLogger.logMain(
         Thread.currentThread().getName() + " is performing: " + operation);
     try {
       Thread.sleep(duration);

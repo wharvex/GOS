@@ -1,7 +1,9 @@
 package com.wharvex.gos;
 
+import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.time.Instant;
+import java.time.Clock;
 
 public class LogRecordExt extends LogRecord {
   public String getThreadName() {

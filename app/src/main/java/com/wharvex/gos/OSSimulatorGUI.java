@@ -4,6 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.FileOutputStream;
 import java.util.concurrent.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -232,6 +233,12 @@ public class OSSimulatorGUI extends JFrame {
     SwingUtilities.invokeLater(() -> {
       console.append(message + "\n");
       console.setCaretPosition(console.getDocument().getLength());
+      try (FileOutputStream fileOutputStream = new FileOutputStream(
+          "C:\\Users\\tgudl\\gos.log", true)) {
+        fileOutputStream.write((message + "\n").getBytes());
+      } catch (Exception e) {
+        System.err.println("Error writing to file: " + e.getMessage());
+      }
     });
   }
 
