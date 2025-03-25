@@ -15,7 +15,6 @@ public class SingleThreadFactory implements ThreadFactory {
   public Thread newThread(Runnable r) {
     if (thread == null) {
       thread = new Thread(r, name);
-      thread.setPriority(Thread.MAX_PRIORITY);
     }
     return thread;
   }

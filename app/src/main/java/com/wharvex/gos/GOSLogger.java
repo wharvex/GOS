@@ -6,7 +6,7 @@ import java.util.logging.Level;
 public class GOSLogger {
 
   public static void logMain(String message) {
-    OSSimulatorGUI.getInstance().logMessage(message);
+    OSSimulatorGUI.getInstance().logMessage(message, true);
   }
 
   public static void logDebug(String message) {

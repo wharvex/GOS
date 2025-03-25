@@ -1,16 +1,6 @@
 package com.wharvex.gos;
 
-public class Bootloader implements Runnable, WorkSimulator {
-
-  @Override
-  public void run() {
-    simulateWork("BIOS POST check", 500);
-
-    simulateWork("Loading bootloader", 1000);
-
-    simulateWork("Bootloader initializing hardware", 1500);
-  }
-
+public class UserlandProcess implements Runnable, WorkSimulator {
   @Override
   public void simulateWork(String operation, int duration) {
     GOSLogger.logMain(
@@ -21,5 +11,12 @@ public class Bootloader implements Runnable, WorkSimulator {
       Thread.currentThread().interrupt();
       GOSLogger.logMain("bad");
     }
+  }
+
+  @Override
+  public void run() {
+    simulateWork("Loading application", 1000);
+    simulateWork("Initializing application", 1000);
+    simulateWork("Application running", 500);
   }
 }
