@@ -5,6 +5,9 @@ import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.concurrent.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.logging.StreamHandler;
 
 public class OSSimulatorGUI extends JFrame {
   private final ExecutorService bootLoaderThread;
@@ -13,7 +16,9 @@ public class OSSimulatorGUI extends JFrame {
 
   private final SingleThreadFactory bootloaderThreadFactory;
 
-  private JTextArea outputConsole;
+  private final Logger mainLogger;
+
+  private JTextArea console;
   private JButton bootButton;
   private JButton kernelButton;
   private JButton shutdownButton;
@@ -39,6 +44,13 @@ public class OSSimulatorGUI extends JFrame {
     });
 
     initializeGUI();
+
+    mainLogger = Logger.getLogger("Main");
+    mainLogger.setUseParentHandlers(false);
+    var mainOutputLoggerStreamHandler =
+        new StreamHandler(new OutputStreamExt(console),
+            new SimpleFormatterExt());
+    mainLogger.addHandler(mainOutputLoggerStreamHandler);
   }
 
   public static OSSimulatorGUI getInstance() {
@@ -55,9 +67,9 @@ public class OSSimulatorGUI extends JFrame {
     setLayout(new BorderLayout());
 
     // Create UI components
-    outputConsole = new JTextArea();
-    outputConsole.setEditable(false);
-    JScrollPane scrollPane = new JScrollPane(outputConsole);
+    console = new JTextArea();
+    console.setEditable(false);
+    JScrollPane scrollPane = new JScrollPane(console);
 
     bootButton = new JButton("Boot System");
     kernelButton = new JButton("Launch Kernel");
@@ -191,11 +203,6 @@ public class OSSimulatorGUI extends JFrame {
       simulateWork("Loading application", 1000);
       simulateWork("Initializing application", 1000);
       simulateWork("Application running", 500);
-
-      // Update UI on EDT
-      SwingUtilities.invokeLater(() -> {
-        logMessage("Application started successfully");
-      });
     });
   }
 
@@ -221,13 +228,15 @@ public class OSSimulatorGUI extends JFrame {
     }
   }
 
-  private void logMessage(String message) {
+  public void logMessage(String message) {
     SwingUtilities.invokeLater(() -> {
-      outputConsole.append(message + "\n");
-      // Auto-scroll to bottom
-      outputConsole.setCaretPosition(
-          outputConsole.getDocument().getLength());
+      console.append(message + "\n");
+      console.setCaretPosition(console.getDocument().getLength());
     });
+  }
+
+  private void logMessage2(String message) {
+    mainLogger.log(Level.INFO, message);
   }
 
   private void cleanupThreads() {
